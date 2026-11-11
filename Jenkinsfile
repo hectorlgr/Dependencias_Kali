@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     options {
-        timestamps()
         disableConcurrentBuilds()
     }
 
@@ -30,7 +29,7 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Ejecutando pruebas unitarias'
-                sh 'pipenv run pytest -q'
+                sh 'pipenv run python -m pytest -q'
             }
         }
 
