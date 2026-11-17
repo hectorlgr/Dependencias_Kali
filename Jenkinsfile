@@ -42,11 +42,44 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            steps {
-                echo 'Deploy simulado correctamente'
-            }
-        }
+        
+stage('Deploy') {
+    steps {
+        echo 'Construyendo imagen Docker...'
+
+        sh 'docker build -t proyecto-flask-lab:latest .'
+
+        echo 'Desplegando aplicacion Flask...'
+
+        sh '''
+            docker rm -f proyecto-flask-lab \
+                >/dev/null 2>&1 || true
+
+            docker run -d \
+                --name proyecto-flask-lab \
+                --restart unless-stopped \
+                -p 127.0.0.1:5001:5000 \
+                proyecto-flask-lab:latest
+        '''
+
+        echo 'Verificando que Flask responda...'
+
+        sh '''
+            for i in 1 2 3 4 5 6 7 8 9 10; do
+                if docker exec proyecto-flask-lab python -c \
+                    "import urllib.request; r=urllib.request.urlopen('http://127.0.0.1:5000/', timeout=3); assert r.status == 200"; then
+                    echo 'Aplicacion desplegada correctamente: HTTP 200'
+                    exit 0
+                fi
+                sleep 2
+            done
+
+            docker logs proyecto-flask-lab
+            exit 1
+        '''
+    }
+}
+
     }
 
     post {
